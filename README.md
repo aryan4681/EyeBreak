@@ -2,6 +2,9 @@
 
 EyeBreak is a macOS app that helps reduce eye strain by reminding you to take regular breaks. It's a straightforward alternative to paid apps like LookAway ($15 lol).
 
+![Break Screen](Break_Screen.png)
+
+
 ## Features
 
 - Menu bar app with sleek UI
