@@ -148,13 +148,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     @objc func add1Minute() {
-        timeUntilBreak += 60
-        updateMenuTimeDisplay()
+        adjustNextBreak(by: 60)
     }
-    
+
     @objc func add5Minutes() {
-        timeUntilBreak += 5 * 60
-        updateMenuTimeDisplay()
+        adjustNextBreak(by: 5 * 60)
     }
     
     @objc func pauseFor10() { pauseFor(minutes: 10) }
@@ -168,13 +166,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @objc func pauseFor1440() { pauseFor(minutes: 1440) }
     
     @objc func pauseUntilResume() {
-        timeUntilBreak = Int.max / 2
-        updateMenuTimeDisplay()
+        scheduleBreak(in: Int.max / 2)
     }
-    
+
     func pauseFor(minutes: Int) {
-        timeUntilBreak = minutes * 60
-        updateMenuTimeDisplay()
+        scheduleBreak(in: minutes * 60)
     }
     // --- End Menu Handling ---
     
@@ -276,18 +272,26 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     // --- End Formatting ---
     
-    private func scheduleNextBreak() {
-        timeUntilBreak = 20 * 60 // reset to 20-minute interval
-        let date = Date().addingTimeInterval(TimeInterval(timeUntilBreak))
+    private func scheduleBreak(in seconds: Int) {
+        timeUntilBreak = seconds
+        let date = Date().addingTimeInterval(TimeInterval(seconds))
         nextBreakDate = date
-        print("AppDelegate: Scheduling next break in \(timeUntilBreak) seconds at \(date)")
-        // Cancel any existing scheduling
+        print("AppDelegate: Scheduling next break in \(seconds) seconds at \(date)")
         nextBreakWorkItem?.cancel()
         nextBreakTimer?.invalidate()
-        // Schedule a wall-clock based timer to fire next break (fires immediately if missed during sleep)
         let timer = Timer(fireAt: date, interval: 0, target: self, selector: #selector(nextBreakTimerFired), userInfo: nil, repeats: false)
         RunLoop.main.add(timer, forMode: .common)
         nextBreakTimer = timer
+        updateMenuTimeDisplay()
+    }
+
+    private func adjustNextBreak(by seconds: Int) {
+        let remaining = max(0, Int(nextBreakDate?.timeIntervalSinceNow ?? TimeInterval(timeUntilBreak)))
+        scheduleBreak(in: remaining + seconds)
+    }
+
+    private func scheduleNextBreak() {
+        scheduleBreak(in: 20 * 60)
     }
     
     @objc private func nextBreakTimerFired() {
